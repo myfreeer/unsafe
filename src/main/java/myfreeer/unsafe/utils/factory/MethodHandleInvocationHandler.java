@@ -14,7 +14,9 @@ final class MethodHandleInvocationHandler implements InvocationHandler {
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object invoke(final Object proxy,
+                         final Method method,
+                         final Object[] args) throws Throwable {
         final MethodHandle methodHandle;
         if (proxy instanceof IUnsafe) {
             methodHandle = factory.cache.get(method);

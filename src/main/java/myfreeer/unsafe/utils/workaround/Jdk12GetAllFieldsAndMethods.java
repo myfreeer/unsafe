@@ -26,9 +26,9 @@ public class Jdk12GetAllFieldsAndMethods {
                 return false;
             }
             lookup.findStaticSetter(clazz, "fieldFilterMap", Map.class)
-                    .invoke(Collections.EMPTY_MAP);
+                    .invokeExact(Collections.EMPTY_MAP);
             lookup.findStaticSetter(clazz, "fieldFilterMap", Map.class)
-                    .invoke(Collections.EMPTY_MAP);
+                    .invokeExact(Collections.EMPTY_MAP);
 
             if (Jdk12GetAllFieldsAndMethods.lookup == null) {
                 synchronized (Jdk12GetAllFieldsAndMethods.class) {
@@ -55,7 +55,7 @@ public class Jdk12GetAllFieldsAndMethods {
         try {
             final SoftReference reference = ((SoftReference) lookup.findGetter(
                     Class.class, "reflectionData", SoftReference.class)
-                    .invoke(clazz));
+                    .invokeExact(clazz));
             if (reference != null) {
                 reference.clear();
             }

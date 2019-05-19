@@ -21,7 +21,7 @@ public class UnsafeAccessor implements Accessor {
     }
 
     @Override
-    public boolean access(AccessibleObject ao) {
+    public boolean access(final AccessibleObject ao) {
         try {
             setAccessible.invokeExact(ao, true);
             return true;
