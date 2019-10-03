@@ -50,7 +50,8 @@ public class UnsafeTest {
 
     @Test
     public void jdk12() throws NoSuchFieldException {
-        if (System.getProperty("java.specification.version").startsWith("12")) {
+        final String version = System.getProperty("java.specification.version");
+        if (version.startsWith("12") || version.startsWith("13")) {
             assertTrue(Jdk12GetAllFieldsAndMethods.unlock());
             assertTrue(Jdk12GetAllFieldsAndMethods.refreshClass(AccessibleObject.class));
             AccessibleObject.class.getDeclaredField("override");

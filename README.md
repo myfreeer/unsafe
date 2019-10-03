@@ -9,4 +9,5 @@ Note: this is **NOT** production ready.
 * OpenJDK 1.8
 * OpenJDK 11
 * OpenJDK 12
+* OpenJDK 13
  
