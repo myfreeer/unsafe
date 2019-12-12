@@ -4,6 +4,7 @@ import myfreeer.unsafe.utils.IUnsafe;
 import myfreeer.unsafe.utils.exception.UnsafeException;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public abstract class BaseUnsafeFactory implements UnsafeFactory {
 
@@ -141,5 +142,13 @@ public abstract class BaseUnsafeFactory implements UnsafeFactory {
             throws IllegalAccessException, NoSuchFieldException {
         final Field field = unsafeClass.getDeclaredField(fieldName);
         return field.getInt(null);
+    }
+
+    @Override
+    public boolean hasMethod(Method method) {
+        if (method == null) {
+            return false;
+        }
+        return hasMethod(method.getName(), method.getParameterTypes());
     }
 }
