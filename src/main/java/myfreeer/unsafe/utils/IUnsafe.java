@@ -1,6 +1,7 @@
 package myfreeer.unsafe.utils;
 
 import java.lang.reflect.Field;
+import java.security.ProtectionDomain;
 
 /**
  * A collection of methods for performing low-level, unsafe operations.
@@ -19,6 +20,12 @@ import java.lang.reflect.Field;
 
 @SuppressWarnings("unused")
 public interface IUnsafe {
+    /**
+     * This constant differs from all results that will ever be returned from
+     * {@link #staticFieldOffset}, {@link #objectFieldOffset},
+     * or {@link #arrayBaseOffset}.
+     */
+    int INVALID_FIELD_OFFSET = -1;
 
     /// peek and poke operations
     /// (compilers should optimize these to memory ops)
@@ -104,6 +111,26 @@ public interface IUnsafe {
      */
 
     void putInt(Object o, long offset, int x);
+
+    /**
+     * Fetches a reference value from a given Java variable.
+     *
+     * @see #getInt(Object, long)
+     */
+    Object getReference(Object o, long offset);
+
+    /**
+     * Stores a reference value into a given Java variable.
+     * <p>
+     * Unless the reference {@code x} being stored is either null
+     * or matches the field type, the results are undefined.
+     * If the reference {@code o} is non-null, card marks or
+     * other store barriers for that object (if the VM requires them)
+     * are updated.
+     *
+     * @see #putInt(Object, long, int)
+     */
+    void putReference(Object o, long offset, Object x);
 
     /**
      * Fetches a reference value from a given Java variable.
@@ -423,13 +450,143 @@ public interface IUnsafe {
     void setMemory(Object o, long offset, long bytes, byte value);
 
     /**
+     * This method, like all others with 32-bit offsets, was native
+     * in a previous release but is now a wrapper which simply casts
+     * the offset to a long value.  It provides backward compatibility
+     * with bytecodes compiled against 1.4.
+     *
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    int getInt(Object o, int offset);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    void putInt(Object o, int offset, int x);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    Object getObject(Object o, int offset);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    void putObject(Object o, int offset, Object x);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    boolean getBoolean(Object o, int offset);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    void putBoolean(Object o, int offset, boolean x);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    byte getByte(Object o, int offset);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    void putByte(Object o, int offset, byte x);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    short getShort(Object o, int offset);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    void putShort(Object o, int offset, short x);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    char getChar(Object o, int offset);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    void putChar(Object o, int offset, char x);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    long getLong(Object o, int offset);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    void putLong(Object o, int offset, long x);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    float getFloat(Object o, int offset);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    void putFloat(Object o, int offset, float x);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    double getDouble(Object o, int offset);
+
+    /**
+     * @deprecated As of 1.4.1, cast the 32-bit offset argument to a long.
+     * See {@link #staticFieldOffset}.
+     */
+    @Deprecated
+    void putDouble(Object o, int offset, double x);
+
+    /**
      * Sets all bytes in a given block of memory to a fixed value
      * (usually zero).  This provides a <em>single-register</em> addressing mode,
      * as discussed in {@link #getInt(Object, long)}.
      *
-     * <p>Equivalent to {@code setMemory(null, address, bytes, value)}.
+     * <p>Equivalent to <code>setMemory(null, address, bytes, value)</code>.
      */
-
     void setMemory(long address, long bytes, byte value);
 
     /**
@@ -619,6 +776,13 @@ public interface IUnsafe {
     /// random trusted operations from JNI:
 
     /**
+     * Tells the VM to define a class, without security checks.  By default, the
+     * class loader and protection domain come from the caller's class.
+     */
+    Class<?> defineClass(String name, byte[] b, int off, int len,
+                         ClassLoader loader,
+                         ProtectionDomain protectionDomain);
+    /**
      * Defines a class but does not make it known to the class loader or system dictionary.
      * <p>
      * For each CP entry, the corresponding CP patch must either be null or have
@@ -653,6 +817,68 @@ public interface IUnsafe {
     void throwException(Throwable ee);
 
     /**
+     * Returns the offset of a field, truncated to 32 bits.
+     * This method is implemented as follows:
+     * <blockquote><pre>
+     * public int fieldOffset(Field f) {
+     *     if (Modifier.isStatic(f.getModifiers()))
+     *         return (int) staticFieldOffset(f);
+     *     else
+     *         return (int) objectFieldOffset(f);
+     * }
+     * </pre></blockquote>
+     *
+     * @deprecated As of 1.4.1, use {@link #staticFieldOffset} for static
+     * fields and {@link #objectFieldOffset} for non-static fields.
+     */
+    @Deprecated
+    int fieldOffset(Field f);
+
+    /**
+     * Returns the base address for accessing some static field
+     * in the given class.  This method is implemented as follows:
+     * <blockquote><pre>
+     * public Object staticFieldBase(Class c) {
+     *     Field[] fields = c.getDeclaredFields();
+     *     for (int i = 0; i < fields.length; i++) {
+     *         if (Modifier.isStatic(fields[i].getModifiers())) {
+     *             return staticFieldBase(fields[i]);
+     *         }
+     *     }
+     *     return null;
+     * }
+     * </pre></blockquote>
+     *
+     * @deprecated As of 1.4.1, use {@link #staticFieldBase(Field)}
+     * to obtain the base pertaining to a specific {@link Field}.
+     * This method works only for JVMs which store all statics
+     * for a given class in one place.
+     */
+    @Deprecated
+    Object staticFieldBase(Class<?> c);
+
+    /**
+     * Lock the object.  It must get unlocked via {@link #monitorExit}.
+     */
+    @Deprecated
+    void monitorEnter(Object o);
+
+    /**
+     * Unlock the object.  It must have been locked via {@link
+     * #monitorEnter}.
+     */
+    @Deprecated
+    void monitorExit(Object o);
+
+    /**
+     * Tries to lock the object.  Returns true or false to indicate
+     * whether the lock succeeded.  If it did, the object must be
+     * unlocked via {@link #monitorExit}.
+     */
+    @Deprecated
+    boolean tryMonitorEnter(Object o);
+
+    /**
      * Atomically updates Java variable to {@code x} if it is currently
      * holding {@code expected}.
      *
@@ -675,10 +901,36 @@ public interface IUnsafe {
      *
      * @return {@code true} if successful
      */
+    boolean compareAndSetInt(Object o, long offset,
+                             int expected,
+                             int x);
+
+    /**
+     * Atomically updates Java variable to {@code x} if it is currently
+     * holding {@code expected}.
+     *
+     * <p>This operation has memory semantics of a {@code volatile} read
+     * and write.  Corresponds to C11 atomic_compare_exchange_strong.
+     *
+     * @return {@code true} if successful
+     */
 
     boolean compareAndSwapInt(Object o, long offset,
                               int expected,
                               int x);
+
+    /**
+     * Atomically updates Java variable to {@code x} if it is currently
+     * holding {@code expected}.
+     *
+     * <p>This operation has memory semantics of a {@code volatile} read
+     * and write.  Corresponds to C11 atomic_compare_exchange_strong.
+     *
+     * @return {@code true} if successful
+     */
+    boolean compareAndSetLong(Object o, long offset,
+                              long expected,
+                              long x);
 
     /**
      * Atomically updates Java variable to {@code x} if it is currently
@@ -803,6 +1055,18 @@ public interface IUnsafe {
      */
 
     void putDoubleVolatile(Object o, long offset, double x);
+
+    /**
+     * Fetches a reference value from a given Java variable, with volatile
+     * load semantics. Otherwise identical to {@link #getReference(Object, long)}
+     */
+    Object getReferenceVolatile(Object o, long offset);
+
+    /**
+     * Stores a reference value into a given Java variable, with
+     * volatile store semantics. Otherwise identical to {@link #putReference(Object, long, Object)}
+     */
+    void putReferenceVolatile(Object o, long offset, Object x);
 
     /**
      * Version of {@link #putObjectVolatile(Object, long, Object)}
@@ -934,6 +1198,60 @@ public interface IUnsafe {
     long getAndSetLong(Object o, long offset, long newValue);
 
     /**
+     * Release version of {@link #putReferenceVolatile(Object, long, Object)}
+     */
+
+    void putReferenceRelease(Object o, long offset, Object x);
+
+    /**
+     * Release version of {@link #putBooleanVolatile(Object, long, boolean)}
+     */
+
+    void putBooleanRelease(Object o, long offset, boolean x);
+
+    /**
+     * Release version of {@link #putByteVolatile(Object, long, byte)}
+     */
+
+    void putByteRelease(Object o, long offset, byte x);
+
+    /**
+     * Release version of {@link #putShortVolatile(Object, long, short)}
+     */
+
+    void putShortRelease(Object o, long offset, short x);
+
+    /**
+     * Release version of {@link #putCharVolatile(Object, long, char)}
+     */
+
+    void putCharRelease(Object o, long offset, char x);
+
+    /**
+     * Release version of {@link #putIntVolatile(Object, long, int)}
+     */
+
+    void putIntRelease(Object o, long offset, int x);
+
+    /**
+     * Release version of {@link #putFloatVolatile(Object, long, float)}
+     */
+
+    void putFloatRelease(Object o, long offset, float x);
+
+    /**
+     * Release version of {@link #putLongVolatile(Object, long, long)}
+     */
+
+    void putLongRelease(Object o, long offset, long x);
+
+    /**
+     * Release version of {@link #putDoubleVolatile(Object, long, double)}
+     */
+
+    void putDoubleRelease(Object o, long offset, double x);
+
+    /**
      * Atomically exchanges the given reference value with the current
      * reference value of a field or array element within the given
      * object {@code o} at the given {@code offset}.
@@ -944,9 +1262,37 @@ public interface IUnsafe {
      * @return the previous value
      * @since 1.8
      */
-
     Object getAndSetObject(Object o, long offset, Object newValue);
 
+    /**
+     * Atomically updates Java variable to {@code x} if it is currently
+     * holding {@code expected}.
+     *
+     * <p>This operation has memory semantics of a {@code volatile} read
+     * and write.  Corresponds to C11 atomic_compare_exchange_strong.
+     *
+     * @return {@code true} if successful
+     */
+    boolean compareAndSetReference(Object o, long offset,
+                                   Object expected,
+                                   Object x);
+
+    boolean weakCompareAndSetReference(Object o, long offset,
+                                       Object expected,
+                                       Object x);
+
+    /**
+     * Atomically exchanges the given reference value with the current
+     * reference value of a field or array element within the given
+     * object {@code o} at the given {@code offset}.
+     *
+     * @param o        object/array to update the field/element in
+     * @param offset   field/element offset
+     * @param newValue new value
+     * @return the previous value
+     * @since 1.8
+     */
+    Object getAndSetReference(Object o, long offset, Object newValue);
 
     /**
      * Ensures that loads before the fence will not be reordered with loads and
@@ -1004,4 +1350,5 @@ public interface IUnsafe {
      * @since 9
      */
     void invokeCleaner(java.nio.ByteBuffer directBuffer);
+
 }
