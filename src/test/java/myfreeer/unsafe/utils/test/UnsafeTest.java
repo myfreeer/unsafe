@@ -11,6 +11,9 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.junit.Assert.*;
 
@@ -97,5 +100,19 @@ public class UnsafeTest {
                 // sizeof(int) -> 4
                 arr.length * 4);
         assertArrayEquals(arr, arr2);
+    }
+
+    @Test
+    public void putLong() {
+        byte[] arr = new byte[8];
+        final IUnsafe unsafe = UnsafeUtils.getUnsafe();
+        assertNotNull(unsafe);
+        BaseUnsafeFactory factory = UnsafeUtils.getUnsafeFactory();
+        assertNotNull(factory);
+        final long l = ThreadLocalRandom.current().nextLong();
+        unsafe.putLong(arr, (long)factory.ARRAY_BYTE_BASE_OFFSET, l);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+        byteBuffer.order(ByteOrder.nativeOrder()).putLong(l);
+        assertArrayEquals(arr, byteBuffer.array());
     }
 }
