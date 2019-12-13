@@ -1,6 +1,7 @@
 package myfreeer.unsafe.utils;
 
 import myfreeer.unsafe.utils.accessor.Accessor;
+import myfreeer.unsafe.utils.accessor.SafeAccessor;
 import myfreeer.unsafe.utils.accessor.UnsafeAccessor;
 import myfreeer.unsafe.utils.exception.UnsafeException;
 import myfreeer.unsafe.utils.factory.AsmUnsafeFactory;
@@ -77,6 +78,11 @@ public class UnsafeUtils {
     }
 
     public static Accessor getAccessor() {
+        final Accessor accessor = getAccessor0();
+        return accessor == null ? new SafeAccessor() : accessor;
+    }
+
+    private static Accessor getAccessor0() {
         if (failed()) {
             return null;
         }
