@@ -7,8 +7,12 @@ import java.lang.invoke.MethodHandles;
 import java.lang.ref.SoftReference;
 import java.util.Collections;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Jdk12GetAllFieldsAndMethods {
+    private static final Logger log =
+            Logger.getLogger(Jdk12GetAllFieldsAndMethods.class.getSimpleName());
     private static volatile MethodHandles.Lookup lookup = null;
     private static volatile boolean failed = false;
 
@@ -28,6 +32,7 @@ public class Jdk12GetAllFieldsAndMethods {
             final MethodHandles.Lookup lookup = UnsafeUtils.lookup(clazz);
             if (lookup == null) {
                 failed = true;
+                log.log(Level.WARNING, "unlock: fail to get lookup instance");
                 return false;
             }
             lookup.findStaticSetter(clazz, "fieldFilterMap", Map.class)
@@ -46,6 +51,7 @@ public class Jdk12GetAllFieldsAndMethods {
             return true;
         } catch (Throwable e) {
             failed = true;
+            log.log(Level.WARNING, "unlock", e);
             return false;
         }
     }
@@ -66,6 +72,7 @@ public class Jdk12GetAllFieldsAndMethods {
             }
             return true;
         } catch (Throwable e) {
+            log.log(Level.WARNING, "refreshClass", e);
             return false;
         }
     }
