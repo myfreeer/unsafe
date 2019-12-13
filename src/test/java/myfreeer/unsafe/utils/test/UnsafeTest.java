@@ -82,7 +82,7 @@ public class UnsafeTest {
 
     @Test
     public void unsafeTest3() throws NoSuchMethodException {
-        int[] arr = new int[] {1,2,2,3,4,4,32,2,4,3,1};
+        int[] arr = new int[]{1, 2, 2, 3, 4, 4, 32, 2, 4, 3, 1};
         int[] arr2 = new int[arr.length];
         final IUnsafe unsafe = UnsafeUtils.getUnsafe();
         assertNotNull(unsafe);
