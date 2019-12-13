@@ -9,8 +9,11 @@ import myfreeer.unsafe.utils.factory.BaseUnsafeFactory;
 import myfreeer.unsafe.utils.invoke.LookupFactory;
 
 import java.lang.invoke.MethodHandles;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class UnsafeUtils {
+    private static final Logger log = Logger.getLogger(UnsafeUtils.class.getSimpleName());
     private static volatile AsmUnsafeFactory factory = null;
     private static volatile boolean failed = false;
     private static volatile Accessor accessor = null;
@@ -32,6 +35,7 @@ public class UnsafeUtils {
                         factory = new AsmUnsafeFactory();
                     } catch (UnsafeException e) {
                         failed = true;
+                        log.log(Level.WARNING, "getUnsafeFactory", e);
                     }
                 }
             }
@@ -95,6 +99,7 @@ public class UnsafeUtils {
                     try {
                         accessor = new UnsafeAccessor(factory.getUnsafe());
                     } catch (UnsafeException e) {
+                        log.log(Level.WARNING, "getAccessor0", e);
                         accessorFailed = true;
                     }
                 }
