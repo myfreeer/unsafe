@@ -6,6 +6,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
+@Deprecated
 final class MethodHandleInvocationHandler implements InvocationHandler {
     private final MethodHandleUnsafeFactory factory;
 

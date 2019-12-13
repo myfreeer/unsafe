@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Deprecated
 public class MethodHandleUnsafeFactory extends BaseUnsafeFactory
         implements UnsafeFactory, LookupFactory {
     private static final int TRUSTED = -1;
