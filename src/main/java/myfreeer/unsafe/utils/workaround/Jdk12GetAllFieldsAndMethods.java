@@ -1,5 +1,6 @@
 package myfreeer.unsafe.utils.workaround;
 
+import myfreeer.unsafe.utils.IUnsafe;
 import myfreeer.unsafe.utils.UnsafeUtils;
 
 import java.lang.invoke.MethodHandles;
@@ -20,6 +21,10 @@ public class Jdk12GetAllFieldsAndMethods {
         }
         try {
             final Class<?> clazz = Class.forName("jdk.internal.reflect.Reflection");
+            final IUnsafe unsafe = UnsafeUtils.getUnsafe();
+            if (unsafe != null) {
+                unsafe.ensureClassInitialized(clazz);
+            }
             final MethodHandles.Lookup lookup = UnsafeUtils.lookup(clazz);
             if (lookup == null) {
                 failed = true;
@@ -27,7 +32,7 @@ public class Jdk12GetAllFieldsAndMethods {
             }
             lookup.findStaticSetter(clazz, "fieldFilterMap", Map.class)
                     .invokeExact(Collections.EMPTY_MAP);
-            lookup.findStaticSetter(clazz, "fieldFilterMap", Map.class)
+            lookup.findStaticSetter(clazz, "methodFilterMap", Map.class)
                     .invokeExact(Collections.EMPTY_MAP);
 
             if (Jdk12GetAllFieldsAndMethods.lookup == null) {
