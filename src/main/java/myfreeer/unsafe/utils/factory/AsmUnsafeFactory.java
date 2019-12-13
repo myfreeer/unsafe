@@ -10,19 +10,15 @@ import org.objectweb.asm.Type;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.objectweb.asm.ClassWriter.COMPUTE_FRAMES;
 import static org.objectweb.asm.Opcodes.*;
 
 public class AsmUnsafeFactory extends BaseUnsafeFactory {
-
-    private static final class RandomHolder {
-        static final Random RANDOM = new Random();
-    }
 
     private final Class<?> proxyClass;
     private final Set<MethodDef> methodDefs;
@@ -31,8 +27,8 @@ public class AsmUnsafeFactory extends BaseUnsafeFactory {
     public AsmUnsafeFactory() {
         final ByteCodeClassLoader loader = new ByteCodeClassLoader();
         final String proxyClassName = AsmUnsafeFactory.class.getName() +
-                "_Proxy" +
-                Long.toHexString(RandomHolder.RANDOM.nextLong());
+                "_Proxy_" +
+                Long.toHexString(ThreadLocalRandom.current().nextLong());
         final byte[] bytes = assembleByteCode(unsafeClass,
                 proxyClassName,
                 AbstractUnsafe.class,
