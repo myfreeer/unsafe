@@ -7,6 +7,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -18,13 +19,27 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.objectweb.asm.ClassWriter.COMPUTE_FRAMES;
 import static org.objectweb.asm.Opcodes.*;
 
-public class AsmUnsafeFactory extends BaseUnsafeFactory {
+public class AsmUnsafeFactory implements UnsafeFactory {
 
-    private final Class<?> proxyClass;
     private final Set<MethodDef> methodDefs;
-    private volatile AbstractUnsafe unsafe;
+    private final AbstractUnsafe unsafe;
+    private final UnsafeConstantImpl constant;
+    private final Object theUnsafe;
 
     public AsmUnsafeFactory() {
+        Class<?> unsafeClass;
+        try {
+            unsafeClass = Class.forName("sun.misc.Unsafe");
+            final Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+            theUnsafeField.setAccessible(true);
+            theUnsafe = theUnsafeField.get(null);
+        } catch (ClassNotFoundException e) {
+            throw new UnsafeException("Unsafe class not found", e);
+        } catch (NoSuchFieldException e) {
+            throw new UnsafeException(e);
+        } catch (IllegalAccessException e) {
+            throw new UnsafeException("Can not get unsafe instance", e);
+        }
         final ByteCodeClassLoader loader = new ByteCodeClassLoader();
         final String proxyClassName = AsmUnsafeFactory.class.getName() +
                 "_Proxy_" +
@@ -33,7 +48,7 @@ public class AsmUnsafeFactory extends BaseUnsafeFactory {
                 proxyClassName,
                 AbstractUnsafe.class,
                 new Class<?>[]{IUnsafe.class});
-        proxyClass = loader.defineClass(proxyClassName, bytes);
+        final Class<?> proxyClass = loader.defineClass(proxyClassName, bytes);
         final Method[] methods = proxyClass.getMethods();
         final ConcurrentMap<MethodDef, Boolean> map =
                 new ConcurrentHashMap<>(methods.length + (methods.length >> 2));
@@ -44,34 +59,41 @@ public class AsmUnsafeFactory extends BaseUnsafeFactory {
             map.put(MethodDef.of(method), Boolean.TRUE);
         }
         methodDefs = map.keySet();
+
+        try {
+            //noinspection JavaReflectionInvocation
+            unsafe = (AbstractUnsafe) proxyClass.getConstructor(unsafeClass)
+                    .newInstance(theUnsafe);
+        } catch (InstantiationException | IllegalAccessException |
+                InvocationTargetException | NoSuchMethodException e) {
+            throw new UnsafeException("unsafe init", e);
+        }
+        constant = new UnsafeConstantImpl(unsafe);
+    }
+
+    @Override
+    public Object getTheUnsafe() {
+        return theUnsafe;
     }
 
     @Override
     public AbstractUnsafe getUnsafe() throws UnsafeException {
-        if (unsafe != null) {
-            return unsafe;
-        }
-        return getUnsafe0();
+        return unsafe;
     }
 
-
-    private synchronized AbstractUnsafe getUnsafe0() throws UnsafeException {
-        if (unsafe != null) {
-            return unsafe;
-        }
-        try {
-            //noinspection JavaReflectionInvocation
-            return unsafe = (AbstractUnsafe) proxyClass.getConstructor(unsafeClass)
-                    .newInstance(theUnsafe);
-        } catch (InstantiationException | IllegalAccessException |
-                InvocationTargetException | NoSuchMethodException e) {
-            throw new UnsafeException("getUnsafe", e);
-        }
+    @Override
+    public boolean hasMethod(Method method) {
+        return methodDefs.contains(MethodDef.of(method));
     }
 
     @Override
     public boolean hasMethod(String methodName, Class<?>... parameterTypes) {
         return methodDefs.contains(MethodDef.of(methodName, parameterTypes));
+    }
+
+    @Override
+    public UnsafeConstant getConstant() {
+        return constant;
     }
 
     protected static String getInternalName(String className) {
@@ -266,17 +288,17 @@ public class AsmUnsafeFactory extends BaseUnsafeFactory {
     private static void constructor(final String ownerClass,
                                     final String fieldName,
                                     final String superClass,
-                                    final String unsafeDescriptor,
+                                    final String fieldDescriptor,
                                     final ClassWriter cw) {
         final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>",
-                "(" + unsafeDescriptor + ")V", null, null);
+                "(" + fieldDescriptor + ")V", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitMethodInsn(INVOKESPECIAL, superClass,
                 "<init>", "()V", false);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
-        mv.visitFieldInsn(PUTFIELD, ownerClass, fieldName, unsafeDescriptor);
+        mv.visitFieldInsn(PUTFIELD, ownerClass, fieldName, fieldDescriptor);
         mv.visitInsn(RETURN);
         // computed by asm
         mv.visitMaxs(0, 0);

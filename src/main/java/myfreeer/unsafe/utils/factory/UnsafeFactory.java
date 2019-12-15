@@ -59,4 +59,11 @@ public interface UnsafeFactory {
      */
     boolean hasMethod(String methodName, Class<?>... parameterTypes);
 
+
+    /**
+     * Get the holder of runtime constants of unsafe
+     * @return instances of UnsafeConstant
+     */
+    UnsafeConstant getConstant();
+
 }

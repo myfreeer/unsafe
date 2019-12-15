@@ -5,7 +5,7 @@ import myfreeer.unsafe.utils.accessor.SafeAccessor;
 import myfreeer.unsafe.utils.accessor.UnsafeAccessor;
 import myfreeer.unsafe.utils.exception.UnsafeException;
 import myfreeer.unsafe.utils.factory.AsmUnsafeFactory;
-import myfreeer.unsafe.utils.factory.BaseUnsafeFactory;
+import myfreeer.unsafe.utils.factory.UnsafeFactory;
 import myfreeer.unsafe.utils.invoke.LookupFactory;
 
 import java.lang.invoke.MethodHandles;
@@ -21,7 +21,7 @@ public class UnsafeUtils {
     private UnsafeUtils() {
     }
 
-    public static BaseUnsafeFactory getUnsafeFactory() {
+    public static UnsafeFactory getUnsafeFactory() {
         if (failed) {
             return null;
         }

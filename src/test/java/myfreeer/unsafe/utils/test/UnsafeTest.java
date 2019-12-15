@@ -3,7 +3,7 @@ package myfreeer.unsafe.utils.test;
 import myfreeer.unsafe.utils.IUnsafe;
 import myfreeer.unsafe.utils.UnsafeUtils;
 import myfreeer.unsafe.utils.accessor.Accessor;
-import myfreeer.unsafe.utils.factory.BaseUnsafeFactory;
+import myfreeer.unsafe.utils.factory.UnsafeFactory;
 import myfreeer.unsafe.utils.workaround.Jdk12GetAllFieldsAndMethods;
 import org.junit.Test;
 
@@ -20,7 +20,7 @@ import static org.junit.Assert.*;
 public class UnsafeTest {
     @Test
     public void initFactory() {
-        final BaseUnsafeFactory unsafeFactory = UnsafeUtils.getUnsafeFactory();
+        final UnsafeFactory unsafeFactory = UnsafeUtils.getUnsafeFactory();
         assertNotNull(unsafeFactory);
         assertNotNull(unsafeFactory.getTheUnsafe());
         assertNotNull(unsafeFactory.getUnsafe());
@@ -89,14 +89,14 @@ public class UnsafeTest {
         int[] arr2 = new int[arr.length];
         final IUnsafe unsafe = UnsafeUtils.getUnsafe();
         assertNotNull(unsafe);
-        BaseUnsafeFactory factory = UnsafeUtils.getUnsafeFactory();
+        UnsafeFactory factory = UnsafeUtils.getUnsafeFactory();
         assertNotNull(factory);
         final Method copyMemory = IUnsafe.class.getMethod(
                 "copyMemory", long.class, long.class, long.class);
         assertTrue(factory.hasMethod(copyMemory));
         assertTrue(factory.hasMethod(copyMemory.getName(), copyMemory.getParameterTypes()));
-        unsafe.copyMemory(arr, factory.ARRAY_INT_BASE_OFFSET,
-                arr2, factory.ARRAY_INT_BASE_OFFSET,
+        unsafe.copyMemory(arr, factory.getConstant().ARRAY_INT_BASE_OFFSET(),
+                arr2, factory.getConstant().ARRAY_INT_BASE_OFFSET(),
                 // sizeof(int) -> 4
                 arr.length * 4);
         assertArrayEquals(arr, arr2);
@@ -107,10 +107,10 @@ public class UnsafeTest {
         byte[] arr = new byte[8];
         final IUnsafe unsafe = UnsafeUtils.getUnsafe();
         assertNotNull(unsafe);
-        BaseUnsafeFactory factory = UnsafeUtils.getUnsafeFactory();
+        UnsafeFactory factory = UnsafeUtils.getUnsafeFactory();
         assertNotNull(factory);
         final long l = ThreadLocalRandom.current().nextLong();
-        unsafe.putLong(arr, (long)factory.ARRAY_BYTE_BASE_OFFSET, l);
+        unsafe.putLong(arr, (long)unsafe.arrayBaseOffset(byte[].class), l);
         ByteBuffer byteBuffer = ByteBuffer.allocate(8);
         byteBuffer.order(ByteOrder.nativeOrder()).putLong(l);
         assertArrayEquals(arr, byteBuffer.array());
