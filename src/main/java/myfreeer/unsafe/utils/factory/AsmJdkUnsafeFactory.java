@@ -44,9 +44,9 @@ public class AsmJdkUnsafeFactory extends AsmUnsafeFactory {
         Object theUnsafe;
         try {
             final Field jdkUnsafeField = jdkUnsafeClass.getDeclaredField("theUnsafe");
-            final Object staticFieldBase1 = unsafe.staticFieldBase(jdkUnsafeField);
-            final long staticFieldOffset1 = unsafe.staticFieldOffset(jdkUnsafeField);
-            theUnsafe = unsafe.getObject(staticFieldBase1, staticFieldOffset1);
+            final Object jdkUnsafeFieldBase = unsafe.staticFieldBase(jdkUnsafeField);
+            final long jdkUnsafeFieldFieldOffset = unsafe.staticFieldOffset(jdkUnsafeField);
+            theUnsafe = unsafe.getObject(jdkUnsafeFieldBase, jdkUnsafeFieldFieldOffset);
             //noinspection JavaReflectionInvocation
             final Object jdkUnsafeProxyIns = jdkUnsafeProxy1.getConstructor(jdkUnsafeClass)
                     .newInstance(theUnsafe);
@@ -58,7 +58,6 @@ public class AsmJdkUnsafeFactory extends AsmUnsafeFactory {
             proxyClass = unsafe.defineClass(proxyClassName,
                     proxyByteCode, 0, proxyByteCode.length,
                     AbstractUnsafe.class.getClassLoader(), null);
-            System.out.println(proxyClass);
             jdkUnsafe = (AbstractUnsafe) proxyClass.getConstructor(jdkUnsafeProxy1)
                     .newInstance(jdkUnsafeProxyIns);
         } catch (InstantiationException | InvocationTargetException |
