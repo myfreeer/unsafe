@@ -14,12 +14,13 @@ import java.lang.reflect.Modifier;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.objectweb.asm.ClassWriter.COMPUTE_FRAMES;
 import static org.objectweb.asm.Opcodes.*;
 
 public class AsmUnsafeFactory implements UnsafeFactory {
+    private static final AtomicInteger COUNTER = new AtomicInteger(1);
 
     private final Set<MethodDef> methodDefs;
     private final AbstractUnsafe unsafe;
@@ -42,23 +43,13 @@ public class AsmUnsafeFactory implements UnsafeFactory {
         }
         final ByteCodeClassLoader loader = new ByteCodeClassLoader();
         final String proxyClassName = AsmUnsafeFactory.class.getName() +
-                "_Proxy_" +
-                Long.toHexString(ThreadLocalRandom.current().nextLong());
+                "_Proxy_" + nextCount();
         final byte[] bytes = assembleByteCode(unsafeClass,
                 proxyClassName,
                 AbstractUnsafe.class,
                 new Class<?>[]{IUnsafe.class});
         final Class<?> proxyClass = loader.defineClass(proxyClassName, bytes);
-        final Method[] methods = proxyClass.getMethods();
-        final ConcurrentMap<MethodDef, Boolean> map =
-                new ConcurrentHashMap<>(methods.length + (methods.length >> 2));
-        for (final Method method : methods) {
-            if (Modifier.isAbstract(method.getModifiers())) {
-                continue;
-            }
-            map.put(MethodDef.of(method), Boolean.TRUE);
-        }
-        methodDefs = map.keySet();
+        methodDefs = methodDef(proxyClass);
 
         try {
             //noinspection JavaReflectionInvocation
@@ -71,13 +62,26 @@ public class AsmUnsafeFactory implements UnsafeFactory {
         constant = new UnsafeConstantImpl(unsafe);
     }
 
+    protected static Set<MethodDef> methodDef(Class<?> proxyClass) {
+        final Method[] methods = proxyClass.getMethods();
+        final ConcurrentMap<MethodDef, Boolean> map =
+                new ConcurrentHashMap<>(methods.length + (methods.length >> 2));
+        for (final Method method : methods) {
+            if (Modifier.isAbstract(method.getModifiers())) {
+                continue;
+            }
+            map.put(MethodDef.of(method), Boolean.TRUE);
+        }
+       return map.keySet();
+    }
+
     @Override
     public Object getTheUnsafe() {
         return theUnsafe;
     }
 
     @Override
-    public AbstractUnsafe getUnsafe() throws UnsafeException {
+    public AbstractUnsafe getUnsafe() {
         return unsafe;
     }
 
@@ -305,10 +309,13 @@ public class AsmUnsafeFactory implements UnsafeFactory {
         mv.visitEnd();
     }
 
-    static class ByteCodeClassLoader extends ClassLoader {
+    protected static class ByteCodeClassLoader extends ClassLoader {
         Class<?> defineClass(String name, byte[] code) {
             return defineClass(name, code, 0, code.length);
         }
     }
 
+    protected static int nextCount() {
+        return COUNTER.incrementAndGet();
+    }
 }
