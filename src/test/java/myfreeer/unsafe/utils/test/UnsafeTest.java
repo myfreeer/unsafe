@@ -5,6 +5,7 @@ import myfreeer.unsafe.utils.UnsafeUtils;
 import myfreeer.unsafe.utils.accessor.Accessor;
 import myfreeer.unsafe.utils.factory.UnsafeFactory;
 import myfreeer.unsafe.utils.workaround.Jdk12GetAllFieldsAndMethods;
+import myfreeer.unsafe.utils.workaround.Jdk9AllowReflectiveAccess;
 import org.junit.Test;
 
 import java.lang.invoke.MethodHandles;
@@ -53,14 +54,32 @@ public class UnsafeTest {
 
     @Test
     public void jdk12() throws NoSuchFieldException {
-        final String version = System.getProperty("java.specification.version");
-        if (version.startsWith("12") || version.startsWith("13")) {
+        if (UnsafeUtils.getMajorJavaVersion() >= 12) {
             assertTrue(Jdk12GetAllFieldsAndMethods.unlock());
             assertTrue(Jdk12GetAllFieldsAndMethods.refreshClass(AccessibleObject.class));
             AccessibleObject.class.getDeclaredField("override");
         }
     }
 
+    @Test
+    public void jdk9Reflect() throws NoSuchFieldException, IllegalAccessException {
+        if (UnsafeUtils.getMajorJavaVersion() < 9) {
+            return;
+        }
+        assertTrue(Jdk9AllowReflectiveAccess.addOpens());
+
+        if (UnsafeUtils.getMajorJavaVersion() >= 12) {
+            assertTrue(Jdk12GetAllFieldsAndMethods.unlock());
+            assertTrue(Jdk12GetAllFieldsAndMethods.refreshClass(AccessibleObject.class));
+        }
+
+        assertTrue(Jdk9AllowReflectiveAccess.disableIllegalAccessLogger());
+
+        final Field override = AccessibleObject.class.getDeclaredField("override");
+        override.setAccessible(true);
+        override.set(override, true);
+
+    }
     @Test
     public void unsafeTest() throws NoSuchFieldException {
         final Field value = Integer.class.getDeclaredField("value");

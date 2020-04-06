@@ -64,7 +64,7 @@ public class Jdk12GetAllFieldsAndMethods {
             return false;
         }
         try {
-            final SoftReference reference = ((SoftReference) lookup.findGetter(
+            final SoftReference<?> reference = ((SoftReference<?>) lookup.findGetter(
                     Class.class, "reflectionData", SoftReference.class)
                     .invokeExact(clazz));
             if (reference != null) {
