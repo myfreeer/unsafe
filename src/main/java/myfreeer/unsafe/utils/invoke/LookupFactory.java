@@ -5,6 +5,7 @@ import java.lang.invoke.MethodHandles;
 public interface LookupFactory {
     /**
      * Get or create instance of {@code MethodHandles.Lookup}
+     *
      * @return instance
      */
     MethodHandles.Lookup lookup();

@@ -72,7 +72,7 @@ public class AsmUnsafeFactory implements UnsafeFactory {
             }
             map.put(MethodDef.of(method), Boolean.TRUE);
         }
-       return map.keySet();
+        return map.keySet();
     }
 
     @Override

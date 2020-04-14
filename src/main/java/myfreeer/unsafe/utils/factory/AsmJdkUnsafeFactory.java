@@ -16,6 +16,7 @@ public class AsmJdkUnsafeFactory extends AsmUnsafeFactory {
     private final AbstractUnsafe unsafe;
     private final UnsafeConstantImpl constant;
     private final Object theUnsafe;
+
     public AsmJdkUnsafeFactory() {
         final AbstractUnsafe unsafe = super.getUnsafe();
         Class<?> jdkUnsafeClass;

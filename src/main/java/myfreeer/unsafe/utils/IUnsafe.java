@@ -782,6 +782,7 @@ public interface IUnsafe {
     Class<?> defineClass(String name, byte[] b, int off, int len,
                          ClassLoader loader,
                          ProtectionDomain protectionDomain);
+
     /**
      * Defines a class but does not make it known to the class loader or system dictionary.
      * <p>

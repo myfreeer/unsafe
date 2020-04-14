@@ -7,17 +7,18 @@ import myfreeer.unsafe.utils.exception.UnsafeException;
 import myfreeer.unsafe.utils.factory.AsmUnsafeFactory;
 import myfreeer.unsafe.utils.factory.UnsafeFactory;
 import myfreeer.unsafe.utils.invoke.LookupFactory;
+import myfreeer.unsafe.utils.log.Logger;
+import myfreeer.unsafe.utils.log.Logging;
 
 import java.lang.invoke.MethodHandles;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class UnsafeUtils {
-    private static final Logger log = Logger.getLogger(UnsafeUtils.class.getSimpleName());
+    private static final Logger log = Logging.getLogger(UnsafeUtils.class);
     private static volatile AsmUnsafeFactory factory = null;
     private static volatile boolean failed = false;
     private static volatile Accessor accessor = null;
     private static volatile boolean accessorFailed = false;
+
     private UnsafeUtils() {
     }
 
@@ -35,7 +36,7 @@ public class UnsafeUtils {
                         factory = new AsmUnsafeFactory();
                     } catch (UnsafeException e) {
                         failed = true;
-                        log.log(Level.WARNING, "getUnsafeFactory", e);
+                        log.warn("getUnsafeFactory fail", e);
                     }
                 }
             }
@@ -99,7 +100,7 @@ public class UnsafeUtils {
                     try {
                         accessor = new UnsafeAccessor(factory.getUnsafe());
                     } catch (UnsafeException e) {
-                        log.log(Level.WARNING, "getAccessor0", e);
+                        log.warn("getAccessor0 fail", e);
                         accessorFailed = true;
                     }
                 }
@@ -154,6 +155,7 @@ public class UnsafeUtils {
                 version = extractBeginningInt(javaVersion);
             }
             if (version == -1) {
+                log.info("JavaVersion.getMajorJavaVersion fail");
                 return 7;  // Choose minimum supported JDK version as default
             }
             return version;

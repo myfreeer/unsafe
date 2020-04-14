@@ -1,6 +1,8 @@
 package myfreeer.unsafe.utils.workaround;
 
 import myfreeer.unsafe.utils.UnsafeUtils;
+import myfreeer.unsafe.utils.log.Logger;
+import myfreeer.unsafe.utils.log.Logging;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -8,6 +10,7 @@ import java.lang.invoke.MethodType;
 import java.util.Set;
 
 public class Jdk9AllowReflectiveAccess {
+    private static final Logger log = Logging.getLogger(Jdk9AllowReflectiveAccess.class);
 
     public static boolean addOpens() {
         // lookup with super power
@@ -19,6 +22,7 @@ public class Jdk9AllowReflectiveAccess {
             addOpens0(lookup);
             return true;
         } catch (Throwable e) {
+            log.warn("addOpens fail", e);
             return false;
         }
     }
@@ -55,6 +59,7 @@ public class Jdk9AllowReflectiveAccess {
                     .invoke((Object) null);
             return true;
         } catch (Throwable e) {
+            log.warn("disableIllegalAccessLogger fail", e);
             return false;
         }
     }

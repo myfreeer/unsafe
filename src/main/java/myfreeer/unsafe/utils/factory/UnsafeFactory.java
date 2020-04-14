@@ -62,6 +62,7 @@ public interface UnsafeFactory {
 
     /**
      * Get the holder of runtime constants of unsafe
+     *
      * @return instances of UnsafeConstant
      */
     UnsafeConstant getConstant();

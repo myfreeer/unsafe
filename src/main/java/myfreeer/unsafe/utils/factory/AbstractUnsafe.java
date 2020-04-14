@@ -2,6 +2,8 @@ package myfreeer.unsafe.utils.factory;
 
 import myfreeer.unsafe.utils.IUnsafe;
 import myfreeer.unsafe.utils.invoke.LookupFactory;
+import myfreeer.unsafe.utils.log.Logger;
+import myfreeer.unsafe.utils.log.Logging;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -11,12 +13,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.security.ProtectionDomain;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public abstract class AbstractUnsafe implements IUnsafe, LookupFactory {
     private static final Logger log =
-            Logger.getLogger(AbstractUnsafe.class.getSimpleName());
+            Logging.getLogger(AbstractUnsafe.class);
     private static final int TRUSTED = -1;
 
     private volatile MethodHandle lookupConstructor;
@@ -53,7 +53,7 @@ public abstract class AbstractUnsafe implements IUnsafe, LookupFactory {
             lookupConstructor = lookup.findConstructor(MethodHandles.Lookup.class,
                     MethodType.methodType(void.class, Class.class, int.class));
         } catch (NoSuchMethodException | IllegalAccessException | NoSuchFieldException e) {
-            log.log(Level.WARNING, "lookup() would not work", e);
+            log.warn("lookup() would not work", e);
             lookupConstructor = null;
             lookupConstructorFail = true;
         }
@@ -91,7 +91,7 @@ public abstract class AbstractUnsafe implements IUnsafe, LookupFactory {
                             byte[].class, int.class, int.class,
                             ProtectionDomain.class, String.class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            log.log(Level.WARNING, "Failed to get ClassLoader.defineClass1", e);
+            log.warn("Failed to get ClassLoader.defineClass1", e);
             defineClass1Fail = true;
             return null;
         }
@@ -108,7 +108,7 @@ public abstract class AbstractUnsafe implements IUnsafe, LookupFactory {
             return (MethodHandles.Lookup)
                     lookupConstructor.invokeExact(lookupClass, allowedModes);
         } catch (Throwable throwable) {
-            log.log(Level.WARNING, "lookup() fail", throwable);
+            log.warn("lookup(" + lookupClass + ") fail", throwable);
             return null;
         }
     }
@@ -467,10 +467,11 @@ public abstract class AbstractUnsafe implements IUnsafe, LookupFactory {
         } catch (Error | RuntimeException e) {
             throw e;
         } catch (Throwable e) {
-            log.log(Level.WARNING, "Failed to invoke ClassLoader.defineClass1", e);
+            log.warn("Failed to invoke ClassLoader.defineClass1", e);
             return null;
         }
     }
+
     /**
      * Lock the object.  It must get unlocked via {@link #monitorExit}.
      */
@@ -833,7 +834,7 @@ public abstract class AbstractUnsafe implements IUnsafe, LookupFactory {
         final Class<? extends ByteBuffer> clazz = directBuffer.getClass();
         final MethodHandles.Lookup lookup = lookup(clazz);
         if (lookup == null) {
-            log.log(Level.WARNING, "invokeCleaner: fail to create lookup");
+            log.warn("invokeCleaner: fail to create lookup");
             return;
         }
         try {
@@ -853,7 +854,7 @@ public abstract class AbstractUnsafe implements IUnsafe, LookupFactory {
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable e) {
-            log.log(Level.WARNING, "invokeCleaner fail", e);
+            log.warn("invokeCleaner fail", e);
         }
     }
 }

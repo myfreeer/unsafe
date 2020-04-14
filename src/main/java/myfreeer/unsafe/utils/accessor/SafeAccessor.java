@@ -1,10 +1,11 @@
 package myfreeer.unsafe.utils.accessor;
 
+import myfreeer.unsafe.utils.log.Logger;
+import myfreeer.unsafe.utils.log.Logging;
+
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The fallback impl of {@link Accessor},
@@ -12,7 +13,7 @@ import java.util.logging.Logger;
  */
 public class SafeAccessor implements Accessor {
     private static final Logger log =
-            Logger.getLogger(SafeAccessor.class.getSimpleName());
+            Logging.getLogger(SafeAccessor.class);
 
     @Override
     @SuppressWarnings("deprecation")
@@ -31,7 +32,7 @@ public class SafeAccessor implements Accessor {
         try {
             ao.setAccessible(true);
         } catch (RuntimeException ex) {
-            log.log(Level.WARNING, "setAccessible" + ao, ex);
+            log.warn("setAccessible" + ao, ex);
             return false;
         }
         return true;
