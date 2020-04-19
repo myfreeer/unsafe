@@ -1,17 +1,17 @@
 package myfreeer.unsafe.utils.factory;
 
 import myfreeer.unsafe.utils.IUnsafe;
+import myfreeer.unsafe.utils.log.Logger;
+import myfreeer.unsafe.utils.log.Logging;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class AsmJdkUnsafeFactory extends AsmUnsafeFactory {
     private static final Logger log =
-            Logger.getLogger(AsmJdkUnsafeFactory.class.getSimpleName());
+            Logging.getLogger(AsmJdkUnsafeFactory.class);
     private final Set<MethodDef> methodDefs;
     private final AbstractUnsafe unsafe;
     private final UnsafeConstantImpl constant;
@@ -23,7 +23,7 @@ public class AsmJdkUnsafeFactory extends AsmUnsafeFactory {
         try {
             jdkUnsafeClass = Class.forName("jdk.internal.misc.Unsafe");
         } catch (ClassNotFoundException e) {
-            log.log(Level.INFO, "jdkUnsafeClass not found," +
+            log.info("jdkUnsafeClass not found," +
                     " falling back to sun unsafe", e);
             this.methodDefs = null;
             this.unsafe = null;
@@ -64,7 +64,7 @@ public class AsmJdkUnsafeFactory extends AsmUnsafeFactory {
         } catch (InstantiationException | InvocationTargetException |
                 IllegalAccessException | NoSuchFieldException |
                 NoSuchMethodException e) {
-            log.log(Level.WARNING, "Fail to init proxy for jdk unsafe, falling back", e);
+            log.warn("Fail to init proxy for jdk unsafe, falling back", e);
             this.methodDefs = null;
             this.unsafe = null;
             this.constant = null;
