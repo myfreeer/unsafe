@@ -73,4 +73,11 @@ public class JavaVersionTest {
         // unknown format
         assertEquals(7, UnsafeUtils.JavaVersion.getMajorJavaVersion("Java9"));
     }
+
+    @Test
+    public void testJava14() {
+        // Open JDK 14.0.1
+        assertEquals(14, UnsafeUtils.JavaVersion.getMajorJavaVersion("14.0.1"));
+    }
+
 }

@@ -1,6 +1,7 @@
 package myfreeer.unsafe.utils.factory;
 
 import myfreeer.unsafe.utils.IUnsafe;
+import myfreeer.unsafe.utils.UnsafeUtils;
 import myfreeer.unsafe.utils.invoke.LookupFactory;
 import myfreeer.unsafe.utils.log.Logger;
 import myfreeer.unsafe.utils.log.Logging;
@@ -15,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.security.ProtectionDomain;
 
 public abstract class AbstractUnsafe implements IUnsafe, LookupFactory {
+    private static final int JAVA_14 = 14;
     private static final Logger log =
             Logging.getLogger(AbstractUnsafe.class);
     private static final int TRUSTED = -1;
@@ -50,8 +52,13 @@ public abstract class AbstractUnsafe implements IUnsafe, LookupFactory {
             ensureClassInitialized(MethodHandles.Lookup.class);
             final MethodHandles.Lookup lookup = (MethodHandles.Lookup)
                     getObject(staticFieldBase, staticFieldOffset);
-            lookupConstructor = lookup.findConstructor(MethodHandles.Lookup.class,
-                    MethodType.methodType(void.class, Class.class, int.class));
+            if (UnsafeUtils.getMajorJavaVersion() >= JAVA_14) {
+                lookupConstructor = lookup.findConstructor(MethodHandles.Lookup.class,
+                        MethodType.methodType(void.class, Class.class, Class.class, int.class));
+            } else {
+                lookupConstructor = lookup.findConstructor(MethodHandles.Lookup.class,
+                        MethodType.methodType(void.class, Class.class, int.class));
+            }
         } catch (NoSuchMethodException | IllegalAccessException | NoSuchFieldException e) {
             log.warn("lookup() would not work", e);
             lookupConstructor = null;
@@ -105,8 +112,13 @@ public abstract class AbstractUnsafe implements IUnsafe, LookupFactory {
             return null;
         }
         try {
-            return (MethodHandles.Lookup)
-                    lookupConstructor.invokeExact(lookupClass, allowedModes);
+            if (UnsafeUtils.getMajorJavaVersion() >= JAVA_14) {
+                return (MethodHandles.Lookup)
+                        lookupConstructor.invokeExact(lookupClass, (Class<?>) null, allowedModes);
+            } else {
+                return (MethodHandles.Lookup)
+                        lookupConstructor.invokeExact(lookupClass, allowedModes);
+            }
         } catch (Throwable throwable) {
             log.warn("lookup(" + lookupClass + ") fail", throwable);
             return null;
