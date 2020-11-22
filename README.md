@@ -11,3 +11,4 @@ Note: this is **NOT** production ready.
 * OpenJDK 12
 * OpenJDK 13
 * OpenJDK 14
+* OpenJDK 15
