@@ -1,15 +1,15 @@
 package myfreeer.unsafe.utils.factory;
 
 import myfreeer.unsafe.utils.IUnsafe;
+import myfreeer.unsafe.utils.exception.UnsafeException;
 import myfreeer.unsafe.utils.log.Logger;
 import myfreeer.unsafe.utils.log.Logging;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 
-public class AsmJdkUnsafeFactory extends AsmUnsafeFactory {
+public class AsmJdkUnsafeFactory extends AbstractAsmUnsafeFactory {
     private static final Logger log =
             Logging.getLogger(AsmJdkUnsafeFactory.class);
     private final Set<MethodDef> methodDefs;
@@ -17,59 +17,34 @@ public class AsmJdkUnsafeFactory extends AsmUnsafeFactory {
     private final UnsafeConstantImpl constant;
     private final Object theUnsafe;
 
-    public AsmJdkUnsafeFactory() {
-        final AbstractUnsafe unsafe = super.getUnsafe();
-        Class<?> jdkUnsafeClass;
-        try {
-            jdkUnsafeClass = Class.forName("jdk.internal.misc.Unsafe");
-        } catch (ClassNotFoundException e) {
-            log.info("jdkUnsafeClass not found," +
-                    " falling back to sun unsafe", e);
-            this.methodDefs = null;
-            this.unsafe = null;
-            this.constant = null;
-            this.theUnsafe = null;
-            return;
-        }
+    public AsmJdkUnsafeFactory(
+            Object theUnsafe, Class<?> unsafeClass, IDefineClass defineClass) {
         final String proxyNameInJavaBaseModule =
                 "java.lang.invoke.UnsafeProxy_" + nextCount();
-
         final byte[] byteCodeProxyInJavaBaseModule =
-                assembleByteCode(jdkUnsafeClass, proxyNameInJavaBaseModule);
-        final Class<?> jdkUnsafeProxy1 = unsafe.defineClass(proxyNameInJavaBaseModule,
-                byteCodeProxyInJavaBaseModule,
-                0, byteCodeProxyInJavaBaseModule.length,
-                null, null);
+                assembleByteCode(unsafeClass, proxyNameInJavaBaseModule);
+        final Class<?> jdkUnsafeProxy = defineClass.defineClass(proxyNameInJavaBaseModule,
+                byteCodeProxyInJavaBaseModule);
         Class<?> proxyClass;
         AbstractUnsafe jdkUnsafe;
-        Object theUnsafe;
         try {
-            final Field jdkUnsafeField = jdkUnsafeClass.getDeclaredField("theUnsafe");
-            final Object jdkUnsafeFieldBase = unsafe.staticFieldBase(jdkUnsafeField);
-            final long jdkUnsafeFieldFieldOffset = unsafe.staticFieldOffset(jdkUnsafeField);
-            theUnsafe = unsafe.getObject(jdkUnsafeFieldBase, jdkUnsafeFieldFieldOffset);
-            //noinspection JavaReflectionInvocation
-            final Object jdkUnsafeProxyIns = jdkUnsafeProxy1.getConstructor(jdkUnsafeClass)
+            final Object jdkUnsafeProxyIns = jdkUnsafeProxy.getConstructor(unsafeClass)
                     .newInstance(theUnsafe);
-
             final String proxyClassName = AsmJdkUnsafeFactory.class.getName() +
                     "_Proxy_" + nextCount();
-            final byte[] proxyByteCode = assembleByteCode(jdkUnsafeProxy1, proxyClassName,
+            final byte[] proxyByteCode = assembleByteCode(jdkUnsafeProxy, proxyClassName,
                     AbstractUnsafe.class, new Class<?>[]{IUnsafe.class});
-            proxyClass = unsafe.defineClass(proxyClassName,
-                    proxyByteCode, 0, proxyByteCode.length,
-                    AbstractUnsafe.class.getClassLoader(), null);
-            jdkUnsafe = (AbstractUnsafe) proxyClass.getConstructor(jdkUnsafeProxy1)
+            proxyClass = defineClass.defineClass(proxyClassName, proxyByteCode);
+            jdkUnsafe = (AbstractUnsafe) proxyClass.getConstructor(jdkUnsafeProxy)
                     .newInstance(jdkUnsafeProxyIns);
-        } catch (InstantiationException | InvocationTargetException |
-                IllegalAccessException | NoSuchFieldException |
-                NoSuchMethodException e) {
-            log.warn("Fail to init proxy for jdk unsafe, falling back", e);
-            this.methodDefs = null;
-            this.unsafe = null;
-            this.constant = null;
-            this.theUnsafe = null;
-            return;
+        } catch (ReflectiveOperationException e) {
+            throw new UnsafeException("Fail to init proxy for jdk unsafe, falling back", e);
+        } catch (RuntimeException e) {
+            if ("java.lang.reflect.InaccessibleObjectException"
+                    .equals(e.getClass().getName())) {
+                throw new UnsafeException("Can not access object", e);
+            }
+            throw e;
         }
         this.methodDefs = methodDef(proxyClass);
         this.unsafe = jdkUnsafe;
@@ -77,34 +52,68 @@ public class AsmJdkUnsafeFactory extends AsmUnsafeFactory {
         this.theUnsafe = theUnsafe;
     }
 
+    public static AsmJdkUnsafeFactory createInstance(IUnsafe unsafe) {
+        Class<?> jdkUnsafeClass;
+        try {
+            jdkUnsafeClass = Class.forName("jdk.internal.misc.Unsafe");
+        } catch (ClassNotFoundException e) {
+            throw new UnsafeException("class jdk.internal.misc.Unsafe not found", e);
+        }
+        Field jdkUnsafeField;
+        try {
+            jdkUnsafeField = jdkUnsafeClass.getDeclaredField("theUnsafe");
+        } catch (ReflectiveOperationException e) {
+            throw new UnsafeException("jdkUnsafeClass.getDeclaredField(\"theUnsafe\")", e);
+        }
+
+        final Object jdkUnsafeFieldBase = unsafe.staticFieldBase(jdkUnsafeField);
+        final long jdkUnsafeFieldFieldOffset = unsafe.staticFieldOffset(jdkUnsafeField);
+        Object theUnsafe = unsafe.getObject(jdkUnsafeFieldBase, jdkUnsafeFieldFieldOffset);
+
+        return new AsmJdkUnsafeFactory(
+                theUnsafe, jdkUnsafeClass, new UnsafeDefineClass(unsafe));
+    }
+
     @Override
     public Object getTheUnsafe() {
-        return theUnsafe == null ? super.getTheUnsafe() : theUnsafe;
+        return theUnsafe;
     }
 
     @Override
     public AbstractUnsafe getUnsafe() {
-        return unsafe == null ? super.getUnsafe() : unsafe;
+        return unsafe;
     }
 
     @Override
     public boolean hasMethod(Method method) {
-        if (methodDefs == null) {
-            return super.hasMethod(method);
-        }
         return methodDefs.contains(MethodDef.of(method));
     }
 
     @Override
     public boolean hasMethod(String methodName, Class<?>... parameterTypes) {
-        if (methodDefs == null) {
-            return super.hasMethod(methodName, parameterTypes);
-        }
         return methodDefs.contains(MethodDef.of(methodName, parameterTypes));
     }
 
     @Override
     public UnsafeConstant getConstant() {
-        return constant == null ? super.getConstant() : constant;
+        return constant;
+    }
+
+    public interface IDefineClass {
+        Class<?> defineClass(String className, byte[] byteCode);
+    }
+
+    public static class UnsafeDefineClass implements IDefineClass {
+        final IUnsafe unsafe;
+
+        public UnsafeDefineClass(final IUnsafe unsafe) {
+            this.unsafe = unsafe;
+        }
+
+        @Override
+        public Class<?> defineClass(final String className, final byte[] byteCode) {
+            return unsafe.defineClass(className, byteCode, 0, byteCode.length,
+                    null, null);
+        }
     }
 }

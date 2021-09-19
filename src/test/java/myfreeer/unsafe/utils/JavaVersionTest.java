@@ -30,54 +30,54 @@ public class JavaVersionTest {
     @Test
     public void testJava7() {
         // http://www.oracle.com/technetwork/java/javase/jdk7-naming-418744.html
-        assertEquals(7, UnsafeUtils.JavaVersion.getMajorJavaVersion("1.7.0"));
+        assertEquals(7, JavaVersion.getMajorJavaVersion("1.7.0"));
     }
 
     @Test
     public void testJava8() {
-        assertEquals(8, UnsafeUtils.JavaVersion.getMajorJavaVersion("1.8"));
-        assertEquals(8, UnsafeUtils.JavaVersion.getMajorJavaVersion("1.8.0"));
-        assertEquals(8, UnsafeUtils.JavaVersion.getMajorJavaVersion("1.8.0_131"));
-        assertEquals(8, UnsafeUtils.JavaVersion.getMajorJavaVersion("1.8.0_60-ea"));
+        assertEquals(8, JavaVersion.getMajorJavaVersion("1.8"));
+        assertEquals(8, JavaVersion.getMajorJavaVersion("1.8.0"));
+        assertEquals(8, JavaVersion.getMajorJavaVersion("1.8.0_131"));
+        assertEquals(8, JavaVersion.getMajorJavaVersion("1.8.0_60-ea"));
         assertEquals(8,
-                UnsafeUtils.JavaVersion.getMajorJavaVersion("1.8.0_111-internal"));
+                JavaVersion.getMajorJavaVersion("1.8.0_111-internal"));
 
         // openjdk8 per https://github.com/AdoptOpenJDK/openjdk-build/issues/93
-        assertEquals(8, UnsafeUtils.JavaVersion.getMajorJavaVersion("1.8.0-internal"));
+        assertEquals(8, JavaVersion.getMajorJavaVersion("1.8.0-internal"));
         assertEquals(8,
-                UnsafeUtils.JavaVersion.getMajorJavaVersion("1.8.0_131-adoptopenjdk"));
+                JavaVersion.getMajorJavaVersion("1.8.0_131-adoptopenjdk"));
     }
 
     @Test
     public void testJava9() {
         // Legacy style
         // Oracle JDK 9
-        assertEquals(9, UnsafeUtils.JavaVersion.getMajorJavaVersion("9.0.4"));
+        assertEquals(9, JavaVersion.getMajorJavaVersion("9.0.4"));
         // Debian as reported in https://github.com/google/gson/issues/1310
-        assertEquals(9, UnsafeUtils.JavaVersion.getMajorJavaVersion("9-Debian"));
+        assertEquals(9, JavaVersion.getMajorJavaVersion("9-Debian"));
         // New style
-        assertEquals(9, UnsafeUtils.JavaVersion.getMajorJavaVersion("9-ea+19"));
-        assertEquals(9, UnsafeUtils.JavaVersion.getMajorJavaVersion("9+100"));
-        assertEquals(9, UnsafeUtils.JavaVersion.getMajorJavaVersion("9.0.1+20"));
-        assertEquals(9, UnsafeUtils.JavaVersion.getMajorJavaVersion("9.1.1+20"));
+        assertEquals(9, JavaVersion.getMajorJavaVersion("9-ea+19"));
+        assertEquals(9, JavaVersion.getMajorJavaVersion("9+100"));
+        assertEquals(9, JavaVersion.getMajorJavaVersion("9.0.1+20"));
+        assertEquals(9, JavaVersion.getMajorJavaVersion("9.1.1+20"));
     }
 
     @Test
     public void testJava10() {
         // Oracle JDK 10.0.1
-        assertEquals(10, UnsafeUtils.JavaVersion.getMajorJavaVersion("10.0.1"));
+        assertEquals(10, JavaVersion.getMajorJavaVersion("10.0.1"));
     }
 
     @Test
     public void testUnknownVersionFormat() {
         // unknown format
-        assertEquals(7, UnsafeUtils.JavaVersion.getMajorJavaVersion("Java9"));
+        assertEquals(7, JavaVersion.getMajorJavaVersion("Java9"));
     }
 
     @Test
     public void testJava14() {
         // Open JDK 14.0.1
-        assertEquals(14, UnsafeUtils.JavaVersion.getMajorJavaVersion("14.0.1"));
+        assertEquals(14, JavaVersion.getMajorJavaVersion("14.0.1"));
     }
 
 }

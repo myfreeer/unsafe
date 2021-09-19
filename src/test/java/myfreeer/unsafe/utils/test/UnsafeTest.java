@@ -16,7 +16,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 public class UnsafeTest {
     @Test
@@ -57,7 +61,7 @@ public class UnsafeTest {
         if (UnsafeUtils.getMajorJavaVersion() >= 12) {
             assertTrue(Jdk12GetAllFieldsAndMethods.unlock());
             assertTrue(Jdk12GetAllFieldsAndMethods.refreshClass(AccessibleObject.class));
-            AccessibleObject.class.getDeclaredField("override");
+            assertNotNull(AccessibleObject.class.getDeclaredField("override"));
         }
     }
 
