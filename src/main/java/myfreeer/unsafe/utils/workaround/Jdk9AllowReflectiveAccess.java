@@ -47,6 +47,12 @@ public class Jdk9AllowReflectiveAccess {
     }
 
     public static boolean disableIllegalAccessLogger() {
+        // removed in JEP 403: Strongly Encapsulate JDK Internals
+        // https://github.com/openjdk/jdk/commit/e63023546aaf48ae39c72ab37f6ef3f5474e19cc
+        if (UnsafeUtils.getMajorJavaVersion() >= 17) {
+            // no need to do this for 17
+            return true;
+        }
         // lookup with super power
         final MethodHandles.Lookup lookup = UnsafeUtils.lookup();
         if (lookup == null) {
